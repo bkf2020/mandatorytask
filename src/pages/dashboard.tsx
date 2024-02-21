@@ -33,7 +33,7 @@ export function AddTaskForm() {
 
   return (
     <div className="sm:flex">
-        <input onChange={(e) => setDesc(e.target.value)} type="text" value={desc} className="py-3 px-4 pe-11 block w-full border-t border-neutral-200 -mt-px -ms-px last:rounded-b-lg sm:mt-0 sm:first:ms-0 sm:first:rounded-se-none sm:last:rounded-es-none text-sm relative focus:z-10 focus:border-blue-500 focus:ring-blue-500 disabled:opacity-50 disabled:pointer-events-none dark:bg-neutral-900 dark:border-neutral-700 dark:text-neutral-400 dark:focus:ring-neutral-600" />
+        <input onChange={(e) => setDesc(e.target.value)} placeholder="Enter task description" type="text" value={desc} className="py-3 px-4 pe-11 block w-full border-t border-neutral-200 -mt-px -ms-px last:rounded-b-lg sm:mt-0 sm:first:ms-0 sm:first:rounded-se-none sm:last:rounded-es-none text-sm relative focus:z-10 focus:border-blue-500 focus:ring-blue-500 disabled:opacity-50 disabled:pointer-events-none dark:bg-neutral-900 dark:border-neutral-700 placeholder-neutral-500 dark:text-neutral-400 dark:placeholder-neutral-400 dark:focus:ring-neutral-600" />
         <input onChange={(e) => setDate(e.target.value)} type="datetime-local" value={date} className="py-3 px-4 pe-11 block w-full border-t border-l border-neutral-200 -mt-px -ms-px last:rounded-b-lg sm:mt-0 sm:first:ms-0 sm:first:rounded-se-none sm:last:rounded-es-none text-sm relative focus:z-10 focus:border-blue-500 focus:ring-blue-500 disabled:opacity-50 disabled:pointer-events-none dark:bg-neutral-900 dark:border-neutral-700 dark:text-neutral-400 dark:focus:ring-neutral-600" />
         <button disabled={desc === "" || date === ""} onClick={() => mutate({ desc: desc, dueDate: new Date(date) })} className="py-3 px-4 text-sm sm:w-1/4 w-full font-semibold border border-transparent bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 disabled:pointer-events-none dark:focus:outline-none dark:focus:ring-1 dark:focus:ring-neutral-600">
           Add
@@ -42,9 +42,71 @@ export function AddTaskForm() {
   )
 }
 
+export function Timer() {
+  let endTime : Date = new Date(Date.now());
+  let intervalId : any;
+  const [duration, setDuration] = useState(0);
+  const [hours, setHours] = useState(0);
+  const [minutes, setMinutes] = useState(0);
+  const [seconds, setSeconds] = useState(0);
+  const [running, setRunning] = useState(false);
+
+  function CountDown() {
+    setRunning(true);
+    let secondsLeft = ((endTime.getTime() - Date.now()) - (endTime.getTime() - Date.now()) % 1000 + 1000) / 1000;
+    let minutesLeft = (secondsLeft - secondsLeft % 60) / 60;
+    secondsLeft %= 60;
+    let hoursLeft = (minutesLeft - minutesLeft % 60) / 60;
+    minutesLeft %= 60;
+    setHours(hoursLeft);
+    setMinutes(minutesLeft);
+    setSeconds(secondsLeft);
+    if (Date.now() >= endTime.getTime()) {
+      setHours(0);
+      setMinutes(0);
+      setSeconds(0);
+      setRunning(false);
+      clearInterval(intervalId);
+    }
+  }
+
+  return (
+    <div className="flex flex-col bg-white border border-neutral-200 shadow-sm rounded-xl p-4 md:p-5 dark:bg-neutral-900 dark:border-neutral-700 dark:text-neutrals-300">
+        <h2 className="text-xl pb-2">Timer for work/break session</h2>
+        <h2 className="text-3xl text-center pb-2s">{hours}<span id="hours" className="text-xl">h</span> {minutes}<span id="min" className="text-xl">m</span> {seconds}<span id="sec"className="text-xl">s</span></h2>
+        <div className="text-center">
+          <input type="number" onChange={(e) => setDuration(e.target.valueAsNumber)} min="1" className="py-2 px-3 w-full max-w-60 my-2 border border-neutral-200 rounded-lg text-sm focus:border-blue-500 focus:ring-blue-500 disabled:opacity-50 disabled:pointer-events-none dark:bg-neutral-900 dark:border-neutral-700 dark:text-neutral-400 dark:placeholder-neutral-400 placeholder-neutral-500 dark:focus:ring-neutral-600" placeholder="Enter number of minutes" />
+          <button type="button" disabled={running}
+            onClick={() => {
+              if (!running) {
+                endTime = new Date(Date.now() + duration * 1000 * 60);
+                intervalId = setInterval(CountDown, 250);
+              }}}
+            className="mx-2 py-2 px-3 w-16 text-center text-sm font-semibold rounded-lg border border-transparent bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 disabled:pointer-events-none dark:focus:outline-none dark:focus:ring-1 dark:focus:ring-neutral-600">
+            Start
+          </button>
+        </div>
+    </div>
+  );
+}
+
 export default function Dashboard() {
   const { data:sessionData, status } = useSession();
   const { data: tasks } = api.task.getAll.useQuery();
+  const ctx = api.useContext();
+  const { mutate } = api.task.setFinished.useMutation({
+    onSuccess: () => {
+      ctx.task.getAll.invalidate();
+    },
+    onError: (e) => {
+      const errorMessage = e.data?.zodError?.fieldErrors.content;
+      if (errorMessage && errorMessage[0]) {
+        toast.error(errorMessage[0]);
+      } else {
+        toast.error("Failed to post! Please try again later.");
+      }
+    },
+  });
 
   if (status !== "authenticated") {
     return (
@@ -73,9 +135,7 @@ export default function Dashboard() {
       </Head>
       <main className="min-h-screen text-neutral-800 dark:bg-neutral-900 dark:text-neutral-300">
         <div className="w-11/12 max-w-screen-md mx-auto py-2">
-            <div className="flex flex-col bg-white border border-neutral-200 shadow-sm rounded-xl p-4 md:p-5 dark:bg-neutral-900 dark:border-neutral-700 dark:text-neutrals-300">
-                <h2>Timer</h2>
-            </div>
+            <Timer />
 
             <div className="flex flex-col py-2">
                 <div className="-m-1.5 overflow-x-auto">
@@ -93,10 +153,10 @@ export default function Dashboard() {
                             {tasks?.map((task) => (
                               [
                                 <tr>
-                                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-neutral-800 dark:text-neutral-200">{task.desc}</td>
-                                  <td className="px-6 py-4 whitespace-nowrap text-end text-sm text-neutral-800 dark:text-neutral-200">{task.dueDate.toString()}</td>
+                                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-neutral-800 dark:text-neutral-300">{task.desc}</td>
+                                  <td className="px-6 py-4 whitespace-nowrap text-end text-sm text-neutral-800 dark:text-neutral-300">{task.dueDate.toString()}</td>
                                   <td className="px-6 py-4 whitespace-nowrap text-end text-sm font-medium">
-                                    <button type="button" className="inline-flex items-center gap-x-2 text-sm font-semibold rounded-lg border border-transparent text-blue-600 hover:text-blue-800 disabled:opacity-50 disabled:pointer-events-none dark:text-blue-500 dark:hover:text-blue-400 dark:focus:outline-none dark:focus:ring-1 dark:focus:ring-neutral-600">Finish</button>
+                                    <button type="button" onClick={() => mutate({ id: task.id })} className="inline-flex items-center gap-x-2 text-sm font-semibold rounded-lg border border-transparent text-blue-600 hover:text-blue-800 disabled:opacity-50 disabled:pointer-events-none dark:text-blue-500 dark:hover:text-blue-400 dark:focus:outline-none dark:focus:ring-1 dark:focus:ring-neutral-600">Finish</button>
                                   </td>
                                 </tr>
                               ]

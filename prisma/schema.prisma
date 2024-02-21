@@ -77,4 +77,5 @@ model Task {
     desc      String
     dueDate   DateTime
     userId    String
+    finished  Boolean  @default(false)
 }
