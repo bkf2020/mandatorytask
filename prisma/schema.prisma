@@ -79,3 +79,10 @@ model Task {
     userId    String
     finished  Boolean  @default(false)
 }
+
+model Punishment {
+    id        Int      @id @default(autoincrement())
+    recipient String
+    userName  String
+    userId    String
+}

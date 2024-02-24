@@ -2,10 +2,10 @@ import { signIn, signOut, useSession } from "next-auth/react";
 import { redirect } from "next/navigation";
 import Head from "next/head";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { api } from "~/utils/api";
-import { toast } from "react-hot-toast";
+import { toast, Toaster } from "react-hot-toast";
 
 export function AddTaskForm() {
   const { data:sessionData, status } = useSession();
@@ -90,6 +90,72 @@ export function Timer() {
   );
 }
 
+export function SetPunishmentForm() {
+  const { data:sessionData, status } = useSession();
+  const [name, setName] = useState("");
+  const [recipient, setRecipient] = useState("");
+  const ctx = api.useContext();
+
+  const { data: punishment, status: data } = api.punishment.getAll.useQuery();
+  useEffect(() => {
+    if (punishment?.userName != null && punishment?.recipient != null) {
+      setName(punishment.userName);
+      setRecipient(punishment.recipient);
+    }
+  }, [data])
+
+  const { mutate } = api.punishment.create.useMutation({
+    onSuccess: () => {
+      toast.success("Information for punishment updated successfully!");
+      void ctx.punishment.getAll.invalidate();
+    },
+    onError: (e) => {
+      const errorMessage = e.data?.zodError?.fieldErrors.recipient;
+      if (errorMessage && errorMessage[0]) {
+        toast.error(errorMessage[0]);
+      } else {
+        toast.error("Failed to post! Please try again later.");
+      }
+    },
+  });
+
+  if (status !== "authenticated") return null;
+
+  const { mutate : mutateUpdate } = api.punishment.update.useMutation({
+    onSuccess: () => {
+      toast.success("Information for punishment updated successfully!");
+      void ctx.punishment.getAll.invalidate();
+    },
+    onError: (e) => {
+      console.log(e.data);
+      const errorMessage = e.data?.zodError?.fieldErrors.recipient;
+      if (errorMessage && errorMessage[0]) {
+        toast.error(errorMessage[0]);
+      } else {
+        toast.error("Failed to post! Please try again later.");
+      }
+    },
+  });
+
+  return (
+    <div className="mb-2 bg-white border border-neutral-200 shadow-sm rounded-xl p-4 md:p-5 dark:bg-neutral-900 dark:border-neutral-700 dark:text-neutrals-300">
+      <h2 className="text-lg">Enter your information for the punishment</h2>
+      <p>Type the name that will appear on the email and the email of the person to notify (the recipient).</p>
+        <input onChange={(e) => setName(e.target.value)} placeholder="Enter your name" type="text" value={name} className="py-2 mr-2 px-3 w-full max-w-60 my-1 border border-neutral-200 rounded-lg text-sm focus:border-blue-500 focus:ring-blue-500 disabled:opacity-50 disabled:pointer-events-none dark:bg-neutral-900 dark:border-neutral-700 dark:text-neutral-400 dark:placeholder-neutral-400 placeholder-neutral-500 dark:focus:ring-neutral-600" />
+        <input onChange={(e) => setRecipient(e.target.value)} type="text" placeholder="Enter email of recipient" value={recipient} className="py-2 mr-2 px-3 w-full max-w-60 my-2 border border-neutral-200 rounded-lg text-sm focus:border-blue-500 focus:ring-blue-500 disabled:opacity-50 disabled:pointer-events-none dark:bg-neutral-900 dark:border-neutral-700 dark:text-neutral-400 dark:placeholder-neutral-400 placeholder-neutral-500 dark:focus:ring-neutral-600" />
+        {punishment != null
+          ? <button disabled={name === "" || recipient === ""} onClick={() => mutateUpdate({ id: punishment.id, name: name, recipient: recipient })} className="py-2 px-3 w-16 text-center text-sm font-semibold rounded-lg border border-transparent bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 disabled:pointer-events-none dark:focus:outline-none dark:focus:ring-1 dark:focus:ring-neutral-600">
+            Set
+          </button>
+          : <button disabled={name === "" || recipient === ""} onClick={() => mutate({ name: name, recipient: recipient })} className="py-2 px-3 w-16 text-center text-sm font-semibold rounded-lg border border-transparent bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 disabled:pointer-events-none dark:focus:outline-none dark:focus:ring-1 dark:focus:ring-neutral-600">
+            Set
+          </button>
+        }
+        
+    </div>
+  )
+}
+
 export default function Dashboard() {
   const { data:sessionData, status } = useSession();
   const { data: tasks } = api.task.getAll.useQuery();
@@ -135,6 +201,8 @@ export default function Dashboard() {
       </Head>
       <main className="min-h-screen text-neutral-800 dark:bg-neutral-900 dark:text-neutral-300">
         <div className="w-11/12 max-w-screen-md mx-auto py-2">
+          <div><Toaster/></div>
+            <SetPunishmentForm></SetPunishmentForm>
             <Timer />
 
             <div className="flex flex-col py-2">
