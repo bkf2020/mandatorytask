@@ -3,4 +3,8 @@ on:
   schedule:
     - cron: '00 * * * *'
 jobs:
-  - run: wget mandatorytask.fly.dev
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - run: "wget mandatorytask.fly.dev"
+

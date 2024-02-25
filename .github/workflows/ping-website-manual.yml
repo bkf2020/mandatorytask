@@ -1,4 +1,8 @@
 name: Ping website manual
 on: [workflow_dispatch]
 jobs:
-  - run: wget mandatorytask.fly.dev
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - run: "wget mandatorytask.fly.dev"
+
