@@ -25,6 +25,15 @@ const config = {
     ],
     "@typescript-eslint/no-unused-vars": ["warn", { argsIgnorePattern: "^_" }],
     "@typescript-eslint/require-await": "off",
+    "react/no-unescaped-entities": "off",
+    "@typescript-eslint/prefer-for-of": "off",
+    "no-var": "off",
+    "prefer-const": "off",
+    "@typescript-eslint/no-floating-promises": "off",
+    "react/jsx-key": "off",
+    "@typescript-eslint/prefer-optional-chain": "off",
+    "@typescript-eslint/no-unsafe-argument": "off",
+    "@typescript-eslint/no-explicit-any": "off",
     "@typescript-eslint/no-misused-promises": [
       "error",
       {

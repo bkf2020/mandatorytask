@@ -1,0 +1,26 @@
+# fly.toml app configuration file generated for mandatorytask on 2024-02-23T19:25:22-08:00
+#
+# See https://fly.io/docs/reference/configuration/ for information about how to use this file.
+#
+
+app = 'mandatorytask'
+primary_region = 'lax'
+
+[build]
+
+[[mounts]]
+  source = 'data'
+  destination = '/data'
+
+[http_service]
+  internal_port = 3000
+  force_https = true
+  auto_stop_machines = true
+  auto_start_machines = true
+  min_machines_running = 0
+  processes = ['app']
+
+[[vm]]
+  memory = '1gb'
+  cpu_kind = 'shared'
+  cpus = 1

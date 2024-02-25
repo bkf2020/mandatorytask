@@ -4,7 +4,7 @@ import { PrismaClient } from '@prisma/client'
 
 const prisma = new PrismaClient();
 
-config();
+config({ path: "/app/.env"});
 
 var transporter = nodemailer.createTransport({
   service: 'gmail',
