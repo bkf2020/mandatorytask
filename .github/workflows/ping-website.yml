@@ -1,7 +1,7 @@
 name: Ping website
 on:
   schedule:
-    - cron: '00 * * * *'
+    - cron: '58 * * * *'
 jobs:
   ping:
     runs-on: ubuntu-latest
