@@ -9,8 +9,9 @@ export default function Home() {
   const hello = api.post.hello.useQuery({ text: "from tRPC" });
 
   const { data: sessionData } = useSession();
+  const router = useRouter();
   if (sessionData?.user != null) {
-    useRouter().push("/dashboard");
+    router.push("/dashboard");
   }
 
   return (
