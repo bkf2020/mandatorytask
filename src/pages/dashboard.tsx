@@ -2,10 +2,12 @@ import { signIn, signOut, useSession } from "next-auth/react";
 import { redirect } from "next/navigation";
 import Head from "next/head";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { api } from "~/utils/api";
 import { toast, Toaster } from "react-hot-toast";
+
+import { useDocumentTitle } from "@uidotdev/usehooks";
 
 export function AddTaskForm() {
   const { data:sessionData, status } = useSession();
@@ -40,54 +42,6 @@ export function AddTaskForm() {
         </button>
     </div>
   )
-}
-
-export function Timer() {
-  let endTime : Date = new Date(Date.now());
-  let intervalId : any;
-  const [duration, setDuration] = useState(0);
-  const [hours, setHours] = useState(0);
-  const [minutes, setMinutes] = useState(0);
-  const [seconds, setSeconds] = useState(0);
-  const [running, setRunning] = useState(false);
-
-  function CountDown() {
-    setRunning(true);
-    let secondsLeft = ((endTime.getTime() - Date.now()) - (endTime.getTime() - Date.now()) % 1000 + 1000) / 1000;
-    let minutesLeft = (secondsLeft - secondsLeft % 60) / 60;
-    secondsLeft %= 60;
-    let hoursLeft = (minutesLeft - minutesLeft % 60) / 60;
-    minutesLeft %= 60;
-    setHours(hoursLeft);
-    setMinutes(minutesLeft);
-    setSeconds(secondsLeft);
-    if (Date.now() >= endTime.getTime()) {
-      setHours(0);
-      setMinutes(0);
-      setSeconds(0);
-      setRunning(false);
-      clearInterval(intervalId);
-    }
-  }
-
-  return (
-    <div className="flex flex-col bg-white border border-neutral-200 shadow-sm rounded-xl p-4 md:p-5 dark:bg-neutral-900 dark:border-neutral-700 dark:text-neutrals-300">
-        <h2 className="text-xl pb-2">Timer for work/break session</h2>
-        <h2 className="text-3xl text-center pb-2s">{hours}<span id="hours" className="text-xl">h</span> {minutes}<span id="min" className="text-xl">m</span> {seconds}<span id="sec"className="text-xl">s</span></h2>
-        <div className="text-center">
-          <input type="number" onChange={(e) => setDuration(e.target.valueAsNumber)} min="1" className="py-2 px-3 w-full max-w-60 my-2 border border-neutral-200 rounded-lg text-sm focus:border-blue-500 focus:ring-blue-500 disabled:opacity-50 disabled:pointer-events-none dark:bg-neutral-900 dark:border-neutral-700 dark:text-neutral-400 dark:placeholder-neutral-400 placeholder-neutral-500 dark:focus:ring-neutral-600" placeholder="Enter number of minutes" />
-          <button type="button" disabled={running}
-            onClick={() => {
-              if (!running) {
-                endTime = new Date(Date.now() + duration * 1000 * 60);
-                intervalId = setInterval(CountDown, 250);
-              }}}
-            className="mx-2 py-2 px-3 w-16 text-center text-sm font-semibold rounded-lg border border-transparent bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 disabled:pointer-events-none dark:focus:outline-none dark:focus:ring-1 dark:focus:ring-neutral-600">
-            Start
-          </button>
-        </div>
-    </div>
-  );
 }
 
 export function SetPunishmentForm() {
@@ -157,6 +111,52 @@ export function SetPunishmentForm() {
 }
 
 export default function Dashboard() {
+  const [running, setRunning] = useState(false);
+  let endTime : Date = new Date(Date.now());
+  const intervalId = useRef(0);
+  let [taskId, setTaskId] = useState(-100);
+  const [hours, setHours] = useState(0);
+  const [minutes, setMinutes] = useState(0);
+  const [seconds, setSeconds] = useState(0);
+  const [fiveMinutesLeft, setFiveMinutesLeft] = useState(false);
+
+  useDocumentTitle(hours + "h:" + minutes + "m:" + seconds + "s: Dashboard - mandatorytask");
+
+  function CountDown() {
+    setRunning(true);
+    let secondsLeft = ((endTime.getTime() - Date.now()) - (endTime.getTime() - Date.now()) % 1000 + 1000) / 1000;
+    if (secondsLeft <= 600) {
+      setFiveMinutesLeft(true);
+    }
+
+    let minutesLeft = (secondsLeft - secondsLeft % 60) / 60;
+    secondsLeft %= 60;
+    let hoursLeft = (minutesLeft - minutesLeft % 60) / 60;
+    minutesLeft %= 60;
+    setHours(hoursLeft);
+    setMinutes(minutesLeft);
+    setSeconds(secondsLeft);
+
+    if (Date.now() >= endTime.getTime()) {
+      setHours(0);
+      setMinutes(0);
+      setSeconds(0);
+      setRunning(false);
+      clearInterval(intervalId.current);
+      setFiveMinutesLeft(false);
+      setTaskId(-100);
+    }
+  }
+
+  function Timer() {
+    return (
+      <div className="flex flex-col bg-white border border-neutral-200 shadow-sm rounded-xl p-4 md:p-5 dark:bg-neutral-900 dark:border-neutral-700 dark:text-neutrals-300">
+          <h2 className="text-xl pb-2">Timer for work session</h2>
+          <h2 className="text-3xl text-center pb-2s">{hours}<span id="hours" className="text-xl">h</span> {minutes}<span id="min" className="text-xl">m</span> {seconds}<span id="sec"className="text-xl">s</span></h2>
+      </div>
+    );
+  }
+
   const { data:sessionData, status } = useSession();
   const { data: tasks } = api.task.getAll.useQuery();
   const ctx = api.useContext();
@@ -173,6 +173,10 @@ export default function Dashboard() {
       }
     },
   });
+
+  if (typeof window === 'object') {
+    document.body.classList.add("text-neutral-800", "dark:bg-neutral-900", "dark:text-neutral-300");
+  }
 
   if (status !== "authenticated") {
     return (
@@ -205,21 +209,20 @@ export default function Dashboard() {
             <a className="flex-none text-xl font-semibold dark:text-neutral-200" href="#">Mandatorytask</a>
             <div className="flex flex-row items-center gap-5 mt-3 sm:justify-end sm:mt-0 sm:ps-5">
               <a className="font-medium text-blue-500 dark:focus:outline-none dark:focus:ring-1 dark:focus:ring-gray-600" href="https://github.com/bkf2020/mandatorytask" rel="noopener noreferer" target="_blank" aria-current="page">GitHub</a>
-              <button className="font-medium text-gray-600 hover:text-gray-400 dark:text-gray-400 dark:hover:text-gray-500 dark:focus:outline-none dark:focus:ring-1 dark:focus:ring-gray-600" onClick={() => signOut({ callbackUrl: '/' })}>Sign out</button>
+              <button className="font-medium text-neutral-600 hover:text-neutral-500 dark:text-neutral-400 dark:hover:text-neutral-500 dark:focus:outline-none dark:focus:ring-1 dark:focus:ring-neutral-600" onClick={() => signOut({ callbackUrl: '/' })}>Sign out</button>
             </div>
           </nav>
         </header>
         <div className="w-11/12 max-w-screen-md mx-auto pb-2">
           <div><Toaster/></div>
             <div className="mb-3">
-              <p className="text-sm">Type tasks with due dates. If you do not finish the task by the due date, an email will be sent to the person you want
+              <p className="text-sm">Type tasks with due dates. Click start to start the task. You can only finish 5 minutes before the due date, so set realistic dates. If you do not finish the task by the due date, an email will be sent to the person you want
               telling them that you didn't finish on time. Note that due dates are displayed based on the time/localization set on your device.
               </p>
             </div>
 
             <SetPunishmentForm></SetPunishmentForm>
             <Timer />
-
             <div className="flex flex-col py-2">
                 <div className="-m-1.5 overflow-x-auto">
                     <div className="p-1.5 min-w-full inline-block align-middle">
@@ -238,8 +241,28 @@ export default function Dashboard() {
                                 <tr>
                                   <td className="px-6 py-4 max-[640px]:whitespace-nowrap text-sm font-medium text-neutral-800 dark:text-neutral-300">{task.desc}</td>
                                   <td className="px-6 py-4 max-[640px]:whitespace-nowrap text-end text-sm text-neutral-800 dark:text-neutral-300">{task.dueDate.toLocaleString()}</td>
-                                  <td className="px-6 py-4 max-[640px]:whitespace-nowrap text-end text-sm font-medium">
-                                    <button type="button" onClick={() => mutate({ id: task.id })} className="inline-flex items-center gap-x-2 text-sm font-semibold rounded-lg border border-transparent text-blue-600 hover:text-blue-800 disabled:opacity-50 disabled:pointer-events-none dark:text-blue-500 dark:hover:text-blue-400 dark:focus:outline-none dark:focus:ring-1 dark:focus:ring-neutral-600">Finish</button>
+                                  <td className="px-6 py-4 max-[640px]:whitespace-nowrap text-end text-sm font-medium" id={task.id.toString()}>
+                                    {task.dueDate > new Date(Date.now()) && taskId !== task.id
+                                      ? <button disabled={running} type="button" onClick={() => {
+                                        if (!running) {
+                                          setFiveMinutesLeft(false);
+                                          setTaskId(task.id);
+                                          endTime = task.dueDate;
+                                          intervalId.current = window.setInterval(CountDown, 250);
+                                        }}} className="inline-flex items-center gap-x-2 text-sm font-semibold rounded-lg border border-transparent text-blue-600 hover:text-blue-800 disabled:opacity-50 disabled:pointer-events-none dark:text-blue-500 dark:hover:text-blue-400 dark:focus:outline-none dark:focus:ring-1 dark:focus:ring-neutral-600">Start</button>
+                                      : <button disabled={taskId === task.id && !fiveMinutesLeft} type="button" onClick={() => {
+                                          mutate({ id: task.id });
+                                          if (taskId === task.id) {
+                                            setHours(0);
+                                            setMinutes(0);
+                                            setSeconds(0);
+                                            setRunning(false);
+                                            clearInterval(intervalId.current);
+                                            setFiveMinutesLeft(false);
+                                            setTaskId(-100);
+                                          }
+                                        }} className="inline-flex items-center gap-x-2 text-sm font-semibold rounded-lg border border-transparent text-blue-600 hover:text-blue-800 disabled:opacity-50 disabled:pointer-events-none dark:text-blue-500 dark:hover:text-blue-400 dark:focus:outline-none dark:focus:ring-1 dark:focus:ring-neutral-600">Finish</button>
+                                    }
                                   </td>
                                 </tr>
                               ]

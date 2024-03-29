@@ -14,13 +14,16 @@ export default function Home() {
     router.push("/dashboard");
   }
 
+  if (typeof window === 'object') {
+    document.body.classList.add("bg-gradient-to-b", "from-white", "to-blue-100", "text-neutral-800", "dark:from-neutral-900", "dark:to-slate-900", "dark:text-neutral-300");
+  }
   return (
     <>
       <Head>
         <title>mandatorytask: home</title>
         <link rel="icon" href="/favicon.ico" />
       </Head>
-      <main className="flex flex-col bg-gradient-to-b from-white to-blue-100 justify-center text-center min-h-screen text-neutral-800 dark:from-neutral-900 dark:to-slate-900 dark:text-neutral-300">
+      <main className="flex flex-col justify-center text-center min-h-screen">
         <div className="mx-auto w-11/12">
           <h2 className="text-5xl text-sky-600 dark:text-sky-400"><b>Mandatory Task</b></h2>
           <p className="my-3 text-2xl">
