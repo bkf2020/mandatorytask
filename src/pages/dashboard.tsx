@@ -175,7 +175,8 @@ export default function Dashboard() {
   });
 
   if (typeof window === 'object') {
-    document.body.classList.add("text-neutral-800", "dark:bg-neutral-900", "dark:text-neutral-300");
+    document.body.className = "";
+    document.body.classList.add("bg-white", "text-neutral-800", "dark:bg-neutral-900", "dark:text-neutral-300");
   }
 
   if (status !== "authenticated") {

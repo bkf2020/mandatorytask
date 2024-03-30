@@ -15,6 +15,7 @@ export default function Home() {
   }
 
   if (typeof window === 'object') {
+    document.body.className = "";
     document.body.classList.add("bg-gradient-to-b", "from-white", "to-blue-100", "text-neutral-800", "dark:from-neutral-900", "dark:to-slate-900", "dark:text-neutral-300");
   }
   return (
