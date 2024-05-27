@@ -1,5 +1,6 @@
+# THIS PROJECT IS NO LONGER MAINTAINED AND NOT AVAILABLE ONLINE.
+
 # Mandatorytask
-[mandatorytask.fly.dev](https://mandatorytask.fly.dev)
 
 Input the tasks you want to finish and the person you want to notify by email if you can't finish on time.
 
