@@ -1,9 +1,1 @@
-name: Ping website
-on:
-  schedule:
-    - cron: '44 */2 * * *'
-jobs:
-  ping:
-    runs-on: ubuntu-latest
-    steps:
-      - run: "wget mandatorytask.fly.dev"
+
